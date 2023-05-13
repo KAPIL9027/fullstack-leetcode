@@ -1,9 +1,10 @@
 const express = require('express')
+const jwt = require('jsonwebtoken')
+const {authorization} = require('./authorization');
+require("dotenv").config()
 const app = express();
-const { v4: uuidv4 } = require('uuid');;
-const port = 3001
 
-let USER = null;
+
 const USERS = [{
   username:"Roger",
   email: "rg23@gmail.com",
@@ -44,31 +45,23 @@ const QUESTIONS = [{
 const SUBMISSION = [
   {
     problem: "Two states",
-    testcases: 45,
-    passed: 30,
-    result: "rejected",
-    username: "rg23@gmail.com"
+    result: "accepted",
+    email: "rg23@gmail.com"
   },
   {
     problem: "Two states",
-    testcases: 45,
-    passed: 40,
     result: "rejected",
-    username: "rg23@gmail.com"
+    email: "rg23@gmail.com"
   },
   {
     problem: "Two sum",
-    testcases: 55,
-    passed: 50,
-    result: "rejected",
-    username: "sg23@gmail.com"
+    result: "accepted",
+    email: "sg23@gmail.com"
   },
   {
     problem: "Next Greater Element",
-    testcases: 60,
-    passed: 60,
     result: "accepted",
-    username: "rs23@gmail.com"
+    email: "rs23@gmail.com"
   }
 ]
 
@@ -86,7 +79,6 @@ const checkEmail = (email)=>{
 
 // check if user email and password exists
 const checkCredentials = (email,password) =>{
-  console.log(email + " " + password);
  for(let i = 0;i < USERS.length;i++)
  {
       if(USERS[i].email === email && USERS[i].password === password)
@@ -95,17 +87,6 @@ const checkCredentials = (email,password) =>{
   return null;
 }
 
-
-const checkUserLoggedInOrNot = (req,res,next)=>{
-   if(USER === null)
-   {
-    res.json({message:"Log in, First!"}).status(401);
-   }
-   else
-   {
-     next();
-   }
-}
 // for parsing the form data that we might get from the frontend (login, signup)
 app.use(express.urlencoded({extended: true}));
 app.use(express.json({extended: true}));
@@ -122,9 +103,6 @@ app.post('/signup', function(req, res) {
   if(!checkEmail(user.email))
   {
     USERS.push(user);
-    USER = user;
-    USER["isAdmin"] = false;
-    res.json({message:`Hi, ${user.username}. you are signed up!!!`}).status(200);
   }
   else
   {
@@ -144,7 +122,9 @@ app.post('/login', function(req, res) {
      if(matchingUser)
      {
       USER = matchingUser;
-      res.json({authToken: `${uuidv4()}`}).status(200);
+      const authToken = jwt.sign(user,process.env.JWT_SECRET);
+
+      res.json({authToken}).status(200);
      }
      else
      {
@@ -157,51 +137,36 @@ app.post('/login', function(req, res) {
   // If the password is not the same, return back 401 status code to the client
 })
 
-app.get('/questions', function(req, res) {
+app.get('/questions', authorization,function(req, res) {
 
   //return the user all the questions in the QUESTIONS array
   
   res.json({questions: QUESTIONS}).status(200);
 })
 
-app.get("/submissions", checkUserLoggedInOrNot,function(req, res) {
+app.get("/submissions", authorization,function(req, res) {
    // return the users submissions for this problem
    const problem = req.query.problem;
    const submissions = SUBMISSION.filter((submission)=> {
-     return submission.problem === problem && submission.username === USER.email;
+     return submission.problem === problem && submission.email === res.locals.user.email;
    })
   res.json({userSubmissions: submissions}).status(200);
 });
 
 
-app.post("/submissions", checkUserLoggedInOrNot,function(req, res) {
+app.post("/submissions", authorization,function(req, res) {
    // let the user submit a problem, randomly accept or reject the solution
    // Store the submission in the SUBMISSION array above
     const problemSubmission = req.body;
-    problemSubmission["username"] = USER.email;
+    problemSubmission["result"] = Math.random() < 0.5 ? "accepted" : "rejected"
+     problemSubmission["email"] = res.locals.user.email;
     SUBMISSION.push(problemSubmission);
     console.log(SUBMISSION);
     res.json({message: "Submitted!!!"}).status(401);
 });
 
-// leaving as hard todos
-// Create a route that lets an admin add a new problem
-// ensure that only admins can do that.
-app.post('/addProblem',checkUserLoggedInOrNot,(req,res)=>{
-  const question = req.body;
-  
-   if(USER.isAdmin === true)
-   {
-     QUESTIONS.push(question);
-     res.json({message:"Added a problem"}).status(200);
-   }
-   else
-   {
-     res.json({message: "You are not an admin"}).status(400);
-   }
-})
 
 
-app.listen(port, function() {
-  console.log(`Example app listening on port ${port}`)
+app.listen('3001',()=>{
+  console.log('Server started and listening on port 3001');
 })
