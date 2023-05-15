@@ -1,7 +1,31 @@
-import React from 'react'
+import {useState} from 'react'
 import { Link } from 'react-router-dom'
 import './Login.css'
 function Login() {
+  const [username,setUsername] = useState("")
+  const [password,setPassword] = useState("")
+
+
+  const onSubmit = async (e)=>{
+    e.preventDefault();
+   const config = {
+    method: 'POST',
+    body: JSON.stringify({
+      email: username,
+      password
+    }),
+    header: {
+      "Content-Type": "application/json"
+    }
+   }
+    console.log(config);
+    const res = await fetch('http://localhost:3001/login',config);
+    const data = res.json();
+    console.log(data);
+    setUsername('')
+    setPassword('')
+  }
+
   return (
     <div className="login">
     <div className="login-card">
@@ -9,10 +33,11 @@ function Login() {
             <img className="leetcode-img" alt="leetcode" src="https://leetcode.com/static/images/LeetCode_logo.png"/>
             <h2 className="leetcode">Leetcode</h2>
         </div>
-        <form className="login-card-form">
-        <input type="text" placeholder="Username or Email" className="input-form" name="username" id="username"/>
-        <input type="password" placeholder="Password" className="input-form" name="password" id="password"/>
-        <button className="form-btn">Sign in</button>
+        <form className="login-card-form"  onSubmit={onSubmit}>
+        <input type="text" placeholder="Username or Email" className="input-form" name="username" id="username" value={username} onChange={(e)=> setUsername(e.target.value)}/>
+        
+        <input type="password" placeholder="Password" className="input-form" name="password" id="password" value = {password} onChange={(e)=> setPassword(e.target.value)}/>
+        <button  className="form-btn">Sign in</button>
         </form>
         <div className="login-card-bottom">
             <div className="login-card-bottom-top">
