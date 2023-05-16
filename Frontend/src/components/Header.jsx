@@ -1,10 +1,13 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import './Header.css'
 import { Link } from 'react-router-dom'
+
 import { Avatar } from '@mui/material'
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import LocalFireDepartmentOutlinedIcon from '@mui/icons-material/LocalFireDepartmentOutlined';
 function Header() {
+  const [isLoggedIn,setIsLoggedIn] = useState((localStorage.getItem('leetcode-clone/authToken')) ? true : false)
+    
   return (
     <div className="header">
         <div className="header-left">
@@ -23,7 +26,17 @@ function Header() {
                 />
                 <span>0</span>
             </div>
-            <Link class="header-links" to="/login" id="signin-header">Sign in or Sign up</Link>
+            {
+             isLoggedIn && <Avatar style={{width: "30px",height: "30px",cursor: "pointer"}} onClick={()=> {
+              localStorage.removeItem('leetcode-clone/authToken')
+              setIsLoggedIn(false)
+             }}/>
+            }
+
+            {
+              !isLoggedIn && <Link class="header-links" to="/login" id="signin-header">Sign in or Sign up</Link>
+            }
+            
         </div>
     </div>
     

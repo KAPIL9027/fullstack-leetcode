@@ -1,29 +1,26 @@
 import {useState} from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import './Login.css'
 function Login() {
   const [username,setUsername] = useState("")
   const [password,setPassword] = useState("")
-
+  const navigate = useNavigate()
 
   const onSubmit = async (e)=>{
-    e.preventDefault();
-   const config = {
-    method: 'POST',
-    body: JSON.stringify({
-      email: username,
-      password
-    }),
-    header: {
-      "Content-Type": "application/json"
-    }
-   }
-    console.log(config);
-    const res = await fetch('http://localhost:3001/login',config);
-    const data = res.json();
-    console.log(data);
-    setUsername('')
-    setPassword('')
+    const res = await fetch('http://localhost:3001/login',{
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: username,
+        password:password
+      })
+    });
+
+    const data = await res.json();
+    if(!localStorage.getItem('leetcode-clone/authToken'))
+    localStorage.setItem('leetcode-clone/authToken',data.authToken);
+    navigate("/problemset/all/");
+    window.location.reload(false);
   }
 
   return (
@@ -33,12 +30,12 @@ function Login() {
             <img className="leetcode-img" alt="leetcode" src="https://leetcode.com/static/images/LeetCode_logo.png"/>
             <h2 className="leetcode">Leetcode</h2>
         </div>
-        <form className="login-card-form"  onSubmit={onSubmit}>
+        <div className="login-card-form"  >
         <input type="text" placeholder="Username or Email" className="input-form" name="username" id="username" value={username} onChange={(e)=> setUsername(e.target.value)}/>
         
         <input type="password" placeholder="Password" className="input-form" name="password" id="password" value = {password} onChange={(e)=> setPassword(e.target.value)}/>
-        <button  className="form-btn">Sign in</button>
-        </form>
+        <button onClick={onSubmit} className="form-btn">Sign in</button>
+        </div>
         <div className="login-card-bottom">
             <div className="login-card-bottom-top">
                 <p className="login-bottom-btns">Forgot Password?</p>

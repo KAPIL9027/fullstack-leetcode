@@ -2,10 +2,11 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const cors = require('cors');
 const {authorization} = require('./authorization');
+const bodyParser = require('body-parser');
+const urlencodedParser = bodyParser.urlencoded({extended: false})
+const jsonParser = bodyParser.json();
 require("dotenv").config()
 const app = express();
-
-
 const USERS = [{
   username:"Roger",
   email: "rg23@gmail.com",
@@ -291,10 +292,8 @@ const checkCredentials = (email,password) =>{
 }
 
 // for parsing the form data that we might get from the frontend (login, signup)
-app.use(express.urlencoded({extended: true}));
-app.use(express.json({extended: true}));
 app.use(cors());
-
+app.use(bodyParser.json());
 
 app.post('/signup', function(req, res) {
   // Add logic to decode body
@@ -317,17 +316,17 @@ app.post('/signup', function(req, res) {
 app.post('/login', function(req, res) {
   // Add logic to decode body
   // body should have email and password
-     const user = req.body;
-     console.log(user);
+     const email = req.body.email;
+     const password = req.body.password;
+    
   // Check if the user with the given email exists in the USERS array
   // Also ensure that the password is the same
-
-    const matchingUser = checkCredentials(user.email,user.password);
+    
+    const matchingUser = checkCredentials(email,password);
      if(matchingUser)
      {
-      USER = matchingUser;
-      const authToken = jwt.sign(user,process.env.JWT_SECRET);
-
+      
+      const authToken = jwt.sign({email},process.env.JWT_SECRET);
       res.json({authToken}).status(200);
      }
      else
